@@ -67,26 +67,30 @@ jobs:
           gradle-version: wrapper
 
       # Forks have no release keystore secrets: without this guard, the
-      # steps above would write an EMPTY app/keystore.jks + key.properties,
+      # steps below would write an EMPTY app/keystore.jks + key.properties,
       # and the release build would then try to sign with that empty
-      # keystore and fail. Guarded, the build falls back to debug signing
-      # (see app/build.gradle.kts: a missing keystore selects the debug
+      # keystore and fail. Guarded in the shell (NOT with `if:`, because
+      # GitHub Actions does not allow the secrets context in `if`
+      # expressions), the build falls back to debug signing (see
+      # app/build.gradle.kts: a missing keystore selects the debug
       # signing config), which is fine for installing on your own phone.
       # Set KEY_STORE / KEY_STORE_PASSWORD / KEY_PASSWORD / KEY_ALIAS
       # secrets in the fork to get a properly release-signed APK.
       - name: Decode Keystore
-        if: ${{ secrets.KEY_STORE != '' }}
         run: |
-          echo "${{ secrets.KEY_STORE }}" | base64 --decode > app/keystore.jks
+          if [ -n "${{ secrets.KEY_STORE }}" ]; then
+            echo "${{ secrets.KEY_STORE }}" | base64 --decode > app/keystore.jks
+          fi
         continue-on-error: true
 
       - name: Create keystore properties file
-        if: ${{ secrets.KEY_STORE != '' }}
         run: |
-          echo "storePassword=${{ secrets.KEY_STORE_PASSWORD }}" > key.properties
-          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> key.properties
-          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> key.properties
-          echo "storeFile=keystore.jks" >> key.properties
+          if [ -n "${{ secrets.KEY_STORE }}" ]; then
+            echo "storePassword=${{ secrets.KEY_STORE_PASSWORD }}" > key.properties
+            echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> key.properties
+            echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> key.properties
+            echo "storeFile=keystore.jks" >> key.properties
+          fi
         continue-on-error: true
 
       - name: Build APK

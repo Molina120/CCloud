@@ -1,5 +1,40 @@
 # CCloud - Movie & TV Series Streaming Application
 
+## ✨ Liquid Glass redesign (this fork)
+
+A full UI/UX redesign of the original app — same features, same data layer,
+no new dependencies, no logic changes to playback or downloads:
+
+- **Liquid Glass system** (`app/src/main/java/com/pira/ccloud/ui/glass/Glass.kt`):
+  frosted surfaces (translucent fill + bright rim + top sheen), a deep
+  violet/cyan/pink aurora backdrop behind every screen, gradient primary
+  actions, and press-scale on cards. True blur is used where it is cheap
+  (aurora blobs, blurred detail backdrops) on API 31+; on older devices
+  (minSdk 24) the same layout renders without the blur pass.
+- **Home (Movies / Series)**: glass poster cards with a frosted rating pill,
+  24dp corners, and 104dp bottom clearance so the floating bar never covers
+  the last row; glass shimmer skeletons while loading.
+- **Categories**: genres are no longer hidden in a dropdown — a scrollable
+  row of glass chips (All + every genre, one tap), with sorting kept as a
+  single frosted pill.
+- **Search**: frosted search pill, glass country-story rings, glass result
+  cards with rating pill + Movie/Series badge.
+- **Movie & series details**: taller hero (380dp) with the cover truly
+  blurred behind the poster, frosted back/favourite buttons, glass genre
+  tags, glass section headers, and season chips (gradient = selected).
+- **Download & play boxes**: the old opaque AlertDialogs are now floating
+  glass bottom sheets — quality rows with a gradient play button, a
+  "Download Options" sheet grouped into Download (Copy Link, Browser, ADM)
+  and Play (VLC, MX, KM), and a per-episode quality sheet for series.
+- **Navigation**: the full-width opaque bottom bar is now a floating glass
+  pill; the selected tab gets a violet→cyan gradient. System bars are
+  transparent (edge-to-edge) so the aurora shows behind them, in both
+  light and dark themes (dark background is now deep violet-black
+  `#0B0714` instead of flat grey).
+- **Favorites**: glass item cards and playlist group card.
+
+Build as usual: `./gradlew assembleDebug` (Android Studio Ladybug+, SDK 36).
+
 <p align="center">
   <img src="app/src/main/res/drawable/splash_logo.png" alt="CCloud Logo" width="150"/>
 </p>

@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -44,6 +45,7 @@ import com.pira.ccloud.navigation.AppNavigation
 import com.pira.ccloud.navigation.AppScreens
 import com.pira.ccloud.navigation.BottomNavigationBar
 import com.pira.ccloud.navigation.SidebarNavigation
+import com.pira.ccloud.ui.glass.AuroraBackground
 import com.pira.ccloud.ui.theme.CCloudTheme
 import com.pira.ccloud.ui.theme.ThemeManager
 import com.pira.ccloud.ui.theme.ThemeSettings
@@ -135,11 +137,18 @@ fun MainScreen(
     
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        // Transparent so the Liquid Glass aurora backdrop shows through everywhere.
+        containerColor = Color.Transparent,
         bottomBar = {
             // Only show bottom bar if the current screen requires it and we're not on splash
             // and we're not on TV (TV uses sidebar instead)
             if (!isTv && currentScreen.showBottomBar && currentRoute != AppScreens.Splash.route) {
-                BottomNavigationBar(navController)
+                // Floating pill: 16dp clear of the bottom edge.
+                androidx.compose.foundation.layout.Box(
+                    modifier = Modifier.padding(bottom = 16.dp)
+                ) {
+                    BottomNavigationBar(navController)
+                }
             }
         }
     ) { innerPadding ->
@@ -166,6 +175,7 @@ fun MainScreen(
         } else {
             // Mobile/tablet layout with bottom navigation
             Box(modifier = Modifier.padding(innerPadding)) {
+                AuroraBackground()
                 // Pass theme settings and font settings callback to navigation
                 AppNavigation(navController, onThemeSettingsChanged, onFontSettingsChanged)
             }

@@ -50,7 +50,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -66,6 +70,14 @@ import coil.request.ImageRequest
 import com.pira.ccloud.VideoPlayerActivity
 import com.pira.ccloud.components.DownloadOptionsDialog
 import com.pira.ccloud.components.ExpandableText
+import com.pira.ccloud.ui.glass.GlassActionRow
+import com.pira.ccloud.ui.glass.GlassChip
+import com.pira.ccloud.ui.glass.GlassIconButton
+import com.pira.ccloud.ui.glass.GlassPrimaryButton
+import com.pira.ccloud.ui.glass.GlassSectionHeader
+import com.pira.ccloud.ui.glass.GlassSheet
+import com.pira.ccloud.ui.glass.GlassSurface
+import com.pira.ccloud.ui.glass.GlassTag
 import com.pira.ccloud.data.model.FavoriteItem
 import com.pira.ccloud.data.model.Episode
 import com.pira.ccloud.data.model.Season
@@ -214,7 +226,7 @@ fun SourceOptionsDialog(
     val context = LocalContext.current
     var selectedSource by remember { mutableStateOf<Source?>(null) }
     var showDownloadOptions by remember { mutableStateOf(false) }
-    
+
     if (showDownloadOptions && selectedSource != null) {
         DownloadOptionsDialog(
             source = selectedSource!!,
@@ -227,60 +239,28 @@ fun SourceOptionsDialog(
             onOpenInKMPlayer = { DownloadUtils.openWithKMPlayer(context, selectedSource!!.url) }
         )
     }
-    
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "Episode: ${episode.title}",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Text(
-                text = "Choose quality to play",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        },
-        confirmButton = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Play buttons for each source/quality
-                episode.sources.forEach { source ->
-                    Button(
-                        onClick = { onPlay(source) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        elevation = androidx.compose.material3.ButtonDefaults.elevatedButtonElevation()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = "Play",
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Play ${source.quality}")
-                    }
-                }
-                
-                // Cancel button
-                TextButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text("Cancel")
-                }
+
+    GlassSheet(
+        onDismiss = onDismiss,
+        title = "Episode: ${episode.title}",
+        subtitle = "Choose a quality to play"
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            episode.sources.forEach { source ->
+                GlassPrimaryButton(
+                    text = "Play ${source.quality}",
+                    icon = Icons.Default.PlayArrow,
+                    onClick = { onPlay(source) }
+                )
             }
-        },
-        containerColor = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(20.dp),
-        tonalElevation = 6.dp
-    )
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Cancel")
+            }
+        }
+    }
 }
 
 @Composable
@@ -322,66 +302,33 @@ fun DownloadMenu(
     
     // Only show the quality selection if there are multiple sources
     if (sources.size > 1) {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = {
-                Text(
-                    text = "Select Quality to Download",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    text = "Choose a quality option for download",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            confirmButton = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    sources.forEach { source ->
-                        Button(
-                            onClick = { 
-                                selectedSource = source
-                                showDownloadOptions = true
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            ),
-                            elevation = androidx.compose.material3.ButtonDefaults.elevatedButtonElevation()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Download,
-                                contentDescription = "Download",
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("${source.quality}")
+        GlassSheet(
+            onDismiss = onDismiss,
+            title = "Select Quality to Download",
+            subtitle = "Choose a quality option for download"
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                sources.forEach { source ->
+                    GlassActionRow(
+                        icon = Icons.Default.Download,
+                        title = source.quality,
+                        subtitle = "Download this quality",
+                        onClick = {
+                            selectedSource = source
+                            showDownloadOptions = true
                         }
-                    }
-                    
-                    // Cancel button
-                    TextButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Text("Cancel")
-                    }
+                    )
                 }
-            },
-            containerColor = MaterialTheme.colorScheme.surface,
-            shape = RoundedCornerShape(20.dp),
-            tonalElevation = 6.dp
-        )
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Cancel")
+                }
+            }
+        }
     }
+
 }
 
 
@@ -409,7 +356,7 @@ fun SeriesDetailsContent(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(300.dp)
+                    .height(380.dp)
             ) {
                 // Background cover image (blurred)
                 Image(
@@ -422,6 +369,8 @@ fun SeriesDetailsContent(
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()
+                        .blur(28.dp)
+                        .scale(1.15f)
                         .background(MaterialTheme.colorScheme.surface),
                     contentScale = ContentScale.Crop
                 )
@@ -433,7 +382,8 @@ fun SeriesDetailsContent(
                         .background(
                             androidx.compose.ui.graphics.Brush.verticalGradient(
                                 colors = listOf(
-                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                                    androidx.compose.ui.graphics.Color.Transparent,
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.35f),
                                     MaterialTheme.colorScheme.surface
                                 )
                             )
@@ -460,7 +410,8 @@ fun SeriesDetailsContent(
                         contentDescription = series.title,
                         modifier = Modifier
                             .height(200.dp)
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(24.dp))
+                            .border(1.dp, Color.White.copy(alpha = 0.35f), RoundedCornerShape(24.dp))
                             .clickable { showImageDialog = true },
                         contentScale = ContentScale.Fit
                     )
@@ -542,18 +493,14 @@ fun SeriesDetailsContent(
                 }
                 
                 // Back button
-                IconButton(
+                GlassIconButton(
                     onClick = onBackClick,
+                    icon = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
                     modifier = Modifier
                         .padding(16.dp)
                         .align(Alignment.TopStart)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
+                )
                 
                 // Favorite button
                 var isFavorite by remember { mutableStateOf(false) }
@@ -626,11 +573,14 @@ fun SeriesDetailsContent(
                     modifier = Modifier
                         .padding(16.dp)
                         .align(Alignment.TopEnd)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.35f))
+                        .border(1.dp, Color.White.copy(alpha = 0.25f), CircleShape)
                 ) {
                     Icon(
                         imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                         contentDescription = "Favorite",
-                        tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        tint = if (isFavorite) Color(0xFFFF5C8A) else Color.White
                     )
                 }
             }
@@ -639,11 +589,8 @@ fun SeriesDetailsContent(
         item {
             // Genres
             if (series.genres.isNotEmpty()) {
-                Text(
-                    text = "Genres",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
+                GlassSectionHeader(
+                    title = "Genres",
                     modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
                 )
                 
@@ -655,29 +602,7 @@ fun SeriesDetailsContent(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(series.genres) { genre ->
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
-                            ),
-                            shape = RoundedCornerShape(50.dp), // More rounded corners
-                            modifier = Modifier
-                                .height(32.dp) // Fixed height for consistency
-                        ) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 12.dp)
-                            ) {
-                                Text(
-                                    text = genre.title,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    fontWeight = FontWeight.Medium,
-                                    maxLines = 1
-                                )
-                            }
-                        }
+                        GlassTag(text = genre.title)
                     }
                 }
             }
@@ -685,20 +610,10 @@ fun SeriesDetailsContent(
         
         item {
             // Description
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp, top = 16.dp, end = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Description",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+            GlassSectionHeader(
+                title = "Description",
+                modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
+            )
         }
         
         item {
@@ -716,11 +631,9 @@ fun SeriesDetailsContent(
         // Seasons selection
         if (seasonsViewModel.seasons.isNotEmpty()) {
             item {
-                Text(
-                    text = "Seasons",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
+                GlassSectionHeader(
+                    title = "Seasons",
+                    subtitle = "Pick a season, then an episode",
                     modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
                 )
             }
@@ -734,33 +647,11 @@ fun SeriesDetailsContent(
                 ) {
                     items(seasonsViewModel.seasons.size) { index ->
                         val season = seasonsViewModel.seasons[index]
-                        Card(
-                            modifier = Modifier
-                                .clickable { selectedSeasonIndex = index },
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (selectedSeasonIndex == index) 
-                                    MaterialTheme.colorScheme.primary 
-                                else 
-                                    MaterialTheme.colorScheme.surfaceVariant
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                            ) {
-                                Text(
-                                    text = season.title,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = if (selectedSeasonIndex == index) 
-                                        MaterialTheme.colorScheme.onPrimary 
-                                    else 
-                                        MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
+                        GlassChip(
+                            text = season.title,
+                            selected = selectedSeasonIndex == index,
+                            onClick = { selectedSeasonIndex = index }
+                        )
                     }
                 }
             }
@@ -846,18 +737,11 @@ fun EpisodeItem(
     onDownloadClick: () -> Unit,
     onImageClick: (String) -> Unit
 ) {
-    Card(
+    GlassSurface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isWatched) 
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            else 
-                MaterialTheme.colorScheme.surfaceVariant,
-        )
+        shape = RoundedCornerShape(20.dp)
     ) {
         Column(
             modifier = Modifier
@@ -882,7 +766,7 @@ fun EpisodeItem(
                             contentDescription = episode.title,
                             modifier = Modifier
                                 .size(60.dp)
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(16.dp))
                                 .clickable { onImageClick(episode.image) },
                             contentScale = ContentScale.Crop
                         )
@@ -970,10 +854,13 @@ fun EpisodeItem(
                 Spacer(modifier = Modifier.width(8.dp))
                 
                 // Play button
-                IconButton(
+                androidx.compose.material3.IconButton(
                     onClick = { onPlayClick() },
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f))
+                        .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f), CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,

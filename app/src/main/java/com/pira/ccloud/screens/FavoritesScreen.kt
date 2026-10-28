@@ -76,6 +76,7 @@ import coil.request.ImageRequest
 import com.pira.ccloud.R
 import com.pira.ccloud.data.model.FavoriteGroup
 import com.pira.ccloud.data.model.FavoriteItem
+import com.pira.ccloud.ui.glass.GlassSurface
 import com.pira.ccloud.navigation.AppScreens
 import com.pira.ccloud.utils.StorageUtils
 import java.util.UUID
@@ -548,7 +549,7 @@ fun FavoritesScreen(navController: NavController) {
             enter = fadeIn(animationSpec = tween(400)) + slideInVertically(animationSpec = tween(400, delayMillis = 100)),
             exit = fadeOut(animationSpec = tween(400)) + slideOutVertically(animationSpec = tween(400))
         ) {
-            Card(
+            GlassSurface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
@@ -557,7 +558,7 @@ fun FavoritesScreen(navController: NavController) {
                     .focusProperties {
                         down = favoritesCardFocusRequester
                     },
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                shape = RoundedCornerShape(24.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
@@ -813,10 +814,9 @@ fun FavoriteItemCard(
     var showMenu by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     
-    Card(
+    GlassSurface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
             .focusable()
             .focusRequester(focusRequester)
             .onKeyEvent { keyEvent ->
@@ -828,8 +828,8 @@ fun FavoriteItemCard(
                     else -> false // Let default handling occur
                 }
             },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(20.dp),
+        onClick = onClick
     ) {
         Row(
             modifier = Modifier
@@ -849,7 +849,7 @@ fun FavoriteItemCard(
                 modifier = Modifier
                     .height(80.dp)
                     .width(60.dp)
-                    .clip(RoundedCornerShape(8.dp)),
+                    .clip(RoundedCornerShape(14.dp)),
                 contentScale = ContentScale.Crop
             )
             

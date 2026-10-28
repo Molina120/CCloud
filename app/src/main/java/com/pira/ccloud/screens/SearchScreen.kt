@@ -72,6 +72,9 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.pira.ccloud.R
 import com.pira.ccloud.data.model.Country
+import com.pira.ccloud.ui.glass.GlassRatingPill
+import com.pira.ccloud.ui.glass.GlassSurface
+import com.pira.ccloud.ui.glass.glass
 import com.pira.ccloud.data.model.Poster
 import com.pira.ccloud.ui.search.SearchViewModel
 import com.pira.ccloud.utils.DeviceUtils
@@ -102,6 +105,7 @@ fun SearchScreen(
             onValueChange = { viewModel.updateSearchQuery(it) },
             modifier = Modifier
                 .fillMaxWidth()
+                .glass(RoundedCornerShape(28.dp))
                 .focusRequester(focusRequester)
                 .clickable { 
                     // Ensure keyboard opens when clicking on the TextField on TV
@@ -158,10 +162,10 @@ fun SearchScreen(
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
                 disabledIndicatorColor = Color.Transparent,
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
             ),
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(28.dp),
             singleLine = true
         )
         
@@ -310,7 +314,7 @@ fun CountryStoryItem(
             modifier = Modifier
                 .size(60.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+                .glass(CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Image(
@@ -350,7 +354,7 @@ fun SearchResultsGrid(
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(0.dp),
+        contentPadding = PaddingValues(start = 0.dp, end = 0.dp, top = 0.dp, bottom = 104.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -378,16 +382,12 @@ fun PosterItem(
     poster: Poster,
     onClick: () -> Unit
 ) {
-    Card(
+    GlassSurface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(310.dp) // Fixed height for all cards
-            .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        )
+            .height(310.dp),
+        shape = RoundedCornerShape(28.dp),
+        onClick = onClick
     ) {
         Column(
             modifier = Modifier
@@ -407,39 +407,15 @@ fun PosterItem(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(180.dp)
-                        .clip(RoundedCornerShape(8.dp)),
+                        .clip(RoundedCornerShape(20.dp)),
                     contentScale = ContentScale.Crop
                 )
                 
-                // Rating overlay at top-right corner
-                Card(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp),
-                    shape = RoundedCornerShape(50.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.Black.copy(alpha = 0.7f)
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Star,
-                            contentDescription = "Rating",
-                            tint = Color.Yellow,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = String.format("%.1f", poster.imdb),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
+                // Frosted rating pill floating on the poster
+                GlassRatingPill(
+                    rating = poster.imdb,
+                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+                )
                 
                 // Type indicator at bottom-right corner
                 Card(

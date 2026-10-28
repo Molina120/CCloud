@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,7 +50,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -64,6 +69,13 @@ import coil.request.ImageRequest
 import com.pira.ccloud.VideoPlayerActivity
 import com.pira.ccloud.components.DownloadOptionsDialog
 import com.pira.ccloud.components.ExpandableText
+import com.pira.ccloud.ui.glass.GlassActionRow
+import com.pira.ccloud.ui.glass.GlassIconButton
+import com.pira.ccloud.ui.glass.GlassPrimaryButton
+import com.pira.ccloud.ui.glass.GlassSectionHeader
+import com.pira.ccloud.ui.glass.GlassSheet
+import com.pira.ccloud.ui.glass.GlassSurface
+import com.pira.ccloud.ui.glass.GlassTag
 import com.pira.ccloud.data.model.FavoriteItem
 import com.pira.ccloud.data.model.Movie
 import com.pira.ccloud.data.model.Source
@@ -160,7 +172,7 @@ fun MovieDetailsContent(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(300.dp)
+                .height(380.dp)
         ) {
             // Background cover image (blurred)
             Image(
@@ -173,6 +185,8 @@ fun MovieDetailsContent(
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxSize()
+                    .blur(28.dp)
+                    .scale(1.15f)
                     .background(MaterialTheme.colorScheme.surface),
                 contentScale = ContentScale.Crop
             )
@@ -184,7 +198,8 @@ fun MovieDetailsContent(
                     .background(
                         androidx.compose.ui.graphics.Brush.verticalGradient(
                             colors = listOf(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                                androidx.compose.ui.graphics.Color.Transparent,
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.35f),
                                 MaterialTheme.colorScheme.surface
                             )
                         )
@@ -211,7 +226,8 @@ fun MovieDetailsContent(
                     contentDescription = movie.title,
                     modifier = Modifier
                         .height(200.dp)
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(24.dp))
+                        .border(1.dp, Color.White.copy(alpha = 0.35f), RoundedCornerShape(24.dp))
                         .clickable { showImageDialog = true },
                     contentScale = ContentScale.Fit
                 )
@@ -293,18 +309,14 @@ fun MovieDetailsContent(
             }
             
             // Back button
-            IconButton(
+            GlassIconButton(
                 onClick = onBackClick,
+                icon = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
                 modifier = Modifier
                     .padding(16.dp)
                     .align(Alignment.TopStart)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
+            )
             
             // Favorite button
             var isFavorite by remember { mutableStateOf(false) }
@@ -347,7 +359,8 @@ fun MovieDetailsContent(
                 )
             }
             
-            IconButton(
+            // Frosted favourite button (logic unchanged, glass look only).
+            androidx.compose.material3.IconButton(
                 onClick = {
                     if (isFavorite) {
                         // Show confirmation dialog instead of directly removing
@@ -378,22 +391,22 @@ fun MovieDetailsContent(
                 modifier = Modifier
                     .padding(16.dp)
                     .align(Alignment.TopEnd)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.35f))
+                    .border(1.dp, Color.White.copy(alpha = 0.25f), CircleShape)
             ) {
                 Icon(
                     imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = "Favorite",
-                    tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                    tint = if (isFavorite) Color(0xFFFF5C8A) else Color.White
                 )
             }
         }
         
         // Genres
         if (movie.genres.isNotEmpty()) {
-            Text(
-                text = "Genres",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+            GlassSectionHeader(
+                title = "Genres",
                 modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
             )
             
@@ -405,48 +418,16 @@ fun MovieDetailsContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(movie.genres) { genre ->
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        ),
-                        shape = RoundedCornerShape(50.dp), // More rounded corners
-                        modifier = Modifier
-                            .height(32.dp) // Fixed height for consistency
-                    ) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 12.dp)
-                        ) {
-                            Text(
-                                text = genre.title,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                fontWeight = FontWeight.Medium,
-                                maxLines = 1
-                            )
-                        }
-                    }
+                    GlassTag(text = genre.title)
                 }
             }
         }
         
         // Description
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, top = 16.dp, end = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Description",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
+        GlassSectionHeader(
+            title = "Description",
+            modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
+        )
         
         // Set layout direction to RTL for the description text
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -460,11 +441,9 @@ fun MovieDetailsContent(
         
         // Sources/Quality options
         if (movie.sources.isNotEmpty()) {
-            Text(
-                text = "Available Qualities",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+            GlassSectionHeader(
+                title = "Available Qualities",
+                subtitle = "${movie.sources.size} options · tap one to play or download",
                 modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
             )
             
@@ -473,37 +452,54 @@ fun MovieDetailsContent(
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp)
             ) {
                 movie.sources.forEach { source ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                selectedSource = source
-                                showSourceDialog = true
-                            },
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        shape = RoundedCornerShape(12.dp)
+                    GlassSurface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        onClick = {
+                            selectedSource = source
+                            showSourceDialog = true
+                        },
+                        contentPadding = 16.dp
                     ) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = source.quality,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = "Play",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = source.quality,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Play or download in this quality",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            listOf(
+                                                MaterialTheme.colorScheme.primary,
+                                                Color(0xFF22D3EE)
+                                            )
+                                        )
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PlayArrow,
+                                    contentDescription = "Play",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -523,7 +519,7 @@ fun SourceOptionsDialog(
 ) {
     val context = LocalContext.current
     var showDownloadOptions by remember { mutableStateOf(false) }
-    
+
     if (showDownloadOptions) {
         DownloadOptionsDialog(
             source = source,
@@ -536,78 +532,35 @@ fun SourceOptionsDialog(
             onOpenInKMPlayer = { DownloadUtils.openWithKMPlayer(context, source.url) }
         )
     }
-    
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = source.quality,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Text(
-                text = "Choose an action for this video quality",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        },
-        confirmButton = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Button(
-                    onClick = { showDownloadOptions = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = androidx.compose.material3.ButtonDefaults.elevatedButtonElevation()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Download,
-                        contentDescription = "Download",
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Download Options")
-                }
-                
-                Button(
-                    onClick = { onPlay(source) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    ),
-                    elevation = androidx.compose.material3.ButtonDefaults.elevatedButtonElevation()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Play",
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Play in CCloud")
-                }
-                
-                // Cancel button moved to the bottom of the dialog
-                TextButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text("Cancel")
-                }
-            }
-        },
-        containerColor = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(20.dp),
-        tonalElevation = 6.dp
-    )
-}
 
+    GlassSheet(
+        onDismiss = onDismiss,
+        title = source.quality,
+        subtitle = "Choose an action for this video quality"
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            GlassPrimaryButton(
+                text = "Play in CCloud",
+                icon = Icons.Default.PlayArrow,
+                onClick = { onPlay(source) }
+            )
+            GlassActionRow(
+                icon = Icons.Default.Download,
+                title = "Download Options",
+                subtitle = "Browser, ADM, VLC, MX Player, KM Player",
+                onClick = { showDownloadOptions = true }
+            )
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Cancel")
+            }
+        }
+    }
+}
 
 fun openUrl(context: Context, url: String) {
     DownloadUtils.openUrl(context, url)

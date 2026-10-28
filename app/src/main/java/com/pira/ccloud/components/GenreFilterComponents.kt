@@ -2,19 +2,18 @@ package com.pira.ccloud.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -31,7 +30,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pira.ccloud.data.model.FilterType
 import com.pira.ccloud.data.model.Genre
+import com.pira.ccloud.ui.glass.GlassChip
+import com.pira.ccloud.ui.glass.glass
 
+/**
+ * Liquid Glass filters.
+ *
+ * Before, genres hid inside a second dropdown (two taps, no overview).
+ * Now categories are a horizontally scrollable row of glass chips — one tap,
+ * everything visible — while sorting stays a single frosted pill, because
+ * sort order is a setting, not a category to browse.
+ */
 @Composable
 fun GenreFilterSection(
     genres: List<Genre>,
@@ -43,34 +52,49 @@ fun GenreFilterSection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(top = 8.dp, bottom = 4.dp)
     ) {
-        Text(
-            text = "Filters",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-        )
-        
-        // Filter row with filter type on left and genre selector on right
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Filter type selector on the left
+            Text(
+                text = "Browse",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
             FilterTypeSelector(
                 selectedFilterType = selectedFilterType,
                 onFilterTypeSelected = onFilterTypeSelected
             )
-            
-            // Genre selector on the right
-            GenreSelector(
-                genres = genres,
-                selectedGenreId = selectedGenreId,
-                onGenreSelected = onGenreSelected
-            )
+        }
+
+        // Category chips: All first, then every genre, scrollable.
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp)
+        ) {
+            item {
+                GlassChip(
+                    text = "All",
+                    selected = selectedGenreId == 0,
+                    onClick = { onGenreSelected(0) }
+                )
+            }
+            items(genres) { genre ->
+                GlassChip(
+                    text = genre.title,
+                    selected = selectedGenreId == genre.id,
+                    onClick = { onGenreSelected(genre.id) }
+                )
+            }
         }
     }
 }
@@ -81,146 +105,65 @@ fun FilterTypeSelector(
     onFilterTypeSelected: (FilterType) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    
-    Card(
-        modifier = Modifier
-            .width(150.dp)
-            .height(36.dp)
-            .clickable { expanded = true },
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primary
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = when (selectedFilterType) {
-                        FilterType.DEFAULT -> "Sort: Default"
-                        FilterType.BY_YEAR -> "Sort: By Year"
-                        FilterType.BY_IMDB -> "Sort: By IMDB"
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.Bold
-                )
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = "Filter options",
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.height(16.dp)
-                )
-            }
-            
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                DropdownMenuItem(
-                    text = { Text("Default") },
-                    onClick = {
-                        onFilterTypeSelected(FilterType.DEFAULT)
-                        expanded = false
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text("By Year") },
-                    onClick = {
-                        onFilterTypeSelected(FilterType.BY_YEAR)
-                        expanded = false
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text("By IMDB") },
-                    onClick = {
-                        onFilterTypeSelected(FilterType.BY_IMDB)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}
 
-@Composable
-fun GenreSelector(
-    genres: List<Genre>,
-    selectedGenreId: Int,
-    onGenreSelected: (Int) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-    
-    // Find the selected genre title
-    val selectedGenreTitle = if (selectedGenreId == 0) {
-        "All Genres"
-    } else {
-        genres.find { it.id == selectedGenreId }?.title ?: "All Genres"
-    }
-    
-    Card(
+    androidx.compose.foundation.layout.Box(
         modifier = Modifier
-            .width(150.dp)
-            .height(36.dp)
-            .clickable { expanded = true },
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondary
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .glass(RoundedCornerShape(50.dp))
+            .clickable { expanded = true }
+            .padding(horizontal = 14.dp, vertical = 9.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.Sort,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(16.dp)
+            )
+            androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = when (selectedFilterType) {
+                    FilterType.DEFAULT -> "Default"
+                    FilterType.BY_YEAR -> "By Year"
+                    FilterType.BY_IMDB -> "By IMDB"
+                },
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Bold
+            )
+            Icon(
+                imageVector = Icons.Default.ArrowDropDown,
+                contentDescription = "Sort options",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = selectedGenreTitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSecondary,
-                    fontWeight = FontWeight.Bold
-                )
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = "Genre options",
-                    tint = MaterialTheme.colorScheme.onSecondary,
-                    modifier = Modifier.height(16.dp)
-                )
-            }
-            
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                DropdownMenuItem(
-                    text = { Text("All Genres") },
-                    onClick = {
-                        onGenreSelected(0)
-                        expanded = false
-                    }
-                )
-                
-                genres.forEach { genre ->
-                    DropdownMenuItem(
-                        text = { Text(genre.title) },
-                        onClick = {
-                            onGenreSelected(genre.id)
-                            expanded = false
-                        }
-                    )
+            DropdownMenuItem(
+                text = { Text("Default") },
+                onClick = {
+                    onFilterTypeSelected(FilterType.DEFAULT)
+                    expanded = false
                 }
-            }
+            )
+            DropdownMenuItem(
+                text = { Text("By Year") },
+                onClick = {
+                    onFilterTypeSelected(FilterType.BY_YEAR)
+                    expanded = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("By IMDB") },
+                onClick = {
+                    onFilterTypeSelected(FilterType.BY_IMDB)
+                    expanded = false
+                }
+            )
         }
     }
 }

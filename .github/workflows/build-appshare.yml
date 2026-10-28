@@ -24,8 +24,19 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
+      # ubuntu-latest runners already ship an Android SDK, and the
+      # android-actions/setup-android@v3 step failed on this fork
+      # (run 40707350288, step 4) before Gradle even started. Use the
+      # preinstalled SDK and install API 36 + build-tools explicitly.
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" || true
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -1)
+          fi
+          yes | "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0" "platform-tools"
 
       - name: Make gradlew executable
         run: |

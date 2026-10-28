@@ -14,6 +14,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Without this, the default GITHUB_TOKEN is read-only and the
+    # Create Release step (run 40709449255, step 16) fails even though
+    # the APK itself built fine. contents:write lets the workflow
+    # create the tag + release in this fork.
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
